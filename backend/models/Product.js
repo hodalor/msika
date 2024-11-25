@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { generateUniqueId, PREFIXES } = require('../utils/idGenerator');
 
 const variantSchema = new mongoose.Schema({
   name: {
@@ -20,10 +21,15 @@ const variantSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  images: [String]
+  images: [String],
+  thumbnail: String
 });
 
 const productSchema = new mongoose.Schema({
+  productId: {
+    type: String,
+    unique: true,
+  },
   name: {
     type: String,
     required: true
@@ -48,6 +54,8 @@ const productSchema = new mongoose.Schema({
     required: true
   },
   images: [String],
+  thumbnail: String,
+  featuredImage: String,
   stock: {
     type: Number,
     required: true,
@@ -70,6 +78,7 @@ const productSchema = new mongoose.Schema({
       max: 5
     },
     review: String,
+    reviewImages: [String],
     date: {
       type: Date,
       default: Date.now
@@ -105,7 +114,20 @@ const productSchema = new mongoose.Schema({
     },
     startTime: Date,
     endTime: Date,
-    discountPrice: Number
+    discountPrice: Number,
+    saleImage: String
+  }
+});
+
+// Generate productId before saving
+productSchema.pre('save', async function(next) {
+  try {
+    if (!this.productId) {
+      this.productId = await generateUniqueId(this.constructor, PREFIXES.PRODUCT, 'productId');
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 

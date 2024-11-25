@@ -53,14 +53,24 @@ function App() {
                       <Route index element={<Home />} />
                       <Route path="products" element={<ProductListing />} />
                       <Route path="products/:id" element={<ProductDetails />} />
-                      <Route path="vendors" element={<VendorListing />} />
                       <Route path="login" element={<Login />} />
                       <Route path="register" element={<Register />} />
                       <Route path="vendor/register" element={<VendorRegister />} />
                       
-                      {/* Protected Vendor Routes */}
+                      {/* Admin Only Routes */}
+                      <Route path="admin/*" element={
+                        <ProtectedRoute roles={['admin']}>
+                          <Routes>
+                            <Route path="dashboard" element={<AdminDashboard />} />
+                            <Route path="users" element={<UserManagement />} />
+                            <Route path="vendors" element={<VendorListing />} />
+                          </Routes>
+                        </ProtectedRoute>
+                      } />
+
+                      {/* Vendor Only Routes */}
                       <Route path="vendor/*" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute roles={['vendor']}>
                           <Routes>
                             <Route path="dashboard" element={<VendorDashboard />} />
                             <Route path="products" element={<VendorProducts />} />
@@ -70,23 +80,15 @@ function App() {
                           </Routes>
                         </ProtectedRoute>
                       } />
-                      <Route path="/checkout" element={
-                        <ProtectedRoute>
+
+                      {/* User Only Routes */}
+                      <Route path="checkout" element={
+                        <ProtectedRoute roles={['user']}>
                           <Checkout />
                         </ProtectedRoute>
                       } />
-                      
-                      {/* Admin Routes */}
-                      <Route path="admin/*" element={
-                        <ProtectedRoute>
-                          <Routes>
-                            <Route path="dashboard" element={<AdminDashboard />} />
-                            <Route path="users" element={<UserManagement />} />
-                          </Routes>
-                        </ProtectedRoute>
-                      } />
 
-                      {/* Account Settings Route */}
+                      {/* Protected Routes for all authenticated users */}
                       <Route path="account/settings" element={
                         <ProtectedRoute>
                           <AccountSettings />

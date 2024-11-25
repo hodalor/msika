@@ -32,6 +32,11 @@ const MainLayout = () => {
     navigate('/login');
   };
 
+  // Function to determine if vendors link should be shown
+  const shouldShowVendorsLink = () => {
+    return user?.role === 'admin'; // Only show to admin
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <AppBar position="fixed">
@@ -48,9 +53,13 @@ const MainLayout = () => {
           <Button color="inherit" component={RouterLink} to="/products">
             Products
           </Button>
-          <Button color="inherit" component={RouterLink} to="/vendors">
-            Vendors
-          </Button>
+
+          {/* Only show Vendors link to admin */}
+          {shouldShowVendorsLink() && (
+            <Button color="inherit" component={RouterLink} to="/vendors">
+              Vendors
+            </Button>
+          )}
           
           {user ? (
             <>
@@ -63,6 +72,12 @@ const MainLayout = () => {
                   Vendor Dashboard
                 </Button>
               ) : null}
+
+              {/* Account Settings Button */}
+              <Button color="inherit" component={RouterLink} to="/account/settings">
+                Account
+              </Button>
+
               <Button color="inherit" onClick={handleLogout}>
                 Logout
               </Button>
@@ -78,15 +93,18 @@ const MainLayout = () => {
             </>
           )}
           
-          <IconButton 
-            color="inherit" 
-            onClick={() => setCartOpen(true)}
-            sx={{ ml: 2 }}
-          >
-            <Badge badgeContent={cartItems.length} color="secondary">
-              <ShoppingCartIcon />
-            </Badge>
-          </IconButton>
+          {/* Only show cart icon to regular users */}
+          {(!user || user.role === 'user') && (
+            <IconButton 
+              color="inherit" 
+              onClick={() => setCartOpen(true)}
+              sx={{ ml: 2 }}
+            >
+              <Badge badgeContent={cartItems.length} color="secondary">
+                <ShoppingCartIcon />
+              </Badge>
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
 

@@ -3,43 +3,26 @@ const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/upload/image`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/upload`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
-      body: formData,
+      body: formData
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload image');
+      const error = await response.json();
+      throw new Error(error.message || 'Image upload failed');
     }
 
     const data = await response.json();
-    return data.imageUrl; // URL from MongoDB/GridFS
+    console.log('Upload response:', data);
+    return data.imageUrl;
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error('Image upload error:', error);
     throw error;
   }
 };
 
-const deleteImage = async (imageUrl) => {
-  try {
-    const imageId = imageUrl.split('/').pop();
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/upload/image/${imageId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to delete image');
-    }
-  } catch (error) {
-    console.error('Error deleting image:', error);
-    throw error;
-  }
-};
-
-export { uploadImage, deleteImage }; 
+export default uploadImage; 

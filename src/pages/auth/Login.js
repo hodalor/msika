@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { authAPI } from '../../services/api';
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email').required('Email is required'),
@@ -33,11 +34,13 @@ const Login = () => {
     onSubmit: async (values, { setSubmitting }) => {
       try {
         console.log('Attempting login with:', values);
-        const result = await login(values);
+        const result = await authAPI.login(values);
         console.log('Login result:', result);
         
         if (result.success) {
+          localStorage.setItem('token', result.token);
           showNotification('Login successful!', 'success');
+          
           // Redirect based on user role
           if (result.user?.role === 'admin') {
             navigate('/admin/dashboard');
@@ -47,11 +50,11 @@ const Login = () => {
             navigate('/');
           }
         } else {
-          showNotification(result.error || 'Invalid credentials', 'error');
+          showNotification(result.message || 'Invalid credentials', 'error');
         }
       } catch (error) {
         console.error('Login error:', error);
-        showNotification('An error occurred during login', 'error');
+        showNotification(error.message || 'An error occurred during login', 'error');
       } finally {
         setSubmitting(false);
       }

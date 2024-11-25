@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { generateUniqueId, PREFIXES } = require('../utils/idGenerator');
 
 const orderItemSchema = new mongoose.Schema({
   product: {
@@ -22,10 +23,10 @@ const orderItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
-  orderNumber: {
+  orderId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   customer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -88,11 +89,10 @@ const orderSchema = new mongoose.Schema({
   }
 });
 
-// Generate order number before saving
+// Generate orderId before saving
 orderSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderNumber = `ORD-${Date.now()}-${count + 1}`;
+  if (!this.orderId) {
+    this.orderId = await generateUniqueId(this.constructor, PREFIXES.ORDER);
   }
   this.updatedAt = Date.now();
   next();

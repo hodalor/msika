@@ -5,8 +5,6 @@ const dotenv = require('dotenv');
 const path = require('path');
 const http = require('http');
 const { initSocket } = require('./services/socket');
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
 
 dotenv.config();
 
@@ -36,25 +34,32 @@ app.use((req, res, next) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/vendors', require('./routes/vendors'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/upload', require('./routes/upload'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error('Error:', err.stack);
+  res.status(500).json({ 
+    success: false,
+    message: 'Something went wrong!',
+    error: err.message 
+  });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../build')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+// Handle 404s
+app.use((req, res) => {
+  console.log('404 Not Found:', req.url);
+  res.status(404).json({ 
+    success: false,
+    message: 'Route not found' 
   });
-}
+});
 
 const PORT = process.env.PORT || 5000;
 
@@ -65,5 +70,13 @@ server.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
-  process.exit(1);
-}); 
+  server.close(() => process.exit(1));
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  server.close(() => process.exit(1));
+});
+
+module.exports = app; 

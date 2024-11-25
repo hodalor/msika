@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
+const { generateUniqueId, PREFIXES } = require('../utils/idGenerator');
 
 const adminSchema = new mongoose.Schema({
+  adminId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   name: {
     type: String,
     required: true
@@ -55,8 +61,11 @@ const adminSchema = new mongoose.Schema({
   }
 });
 
-// Update timestamp before saving
-adminSchema.pre('save', function(next) {
+// Generate adminId before saving
+adminSchema.pre('save', async function(next) {
+  if (!this.adminId) {
+    this.adminId = await generateUniqueId(this.constructor, PREFIXES.ADMIN);
+  }
   this.updatedAt = Date.now();
   next();
 });

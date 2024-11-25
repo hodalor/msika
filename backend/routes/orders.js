@@ -15,7 +15,7 @@ router.get('/vendor', auth, async (req, res) => {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
 
-    let query = { vendor: req.user.id };
+    let query = { vendor: new mongoose.Types.ObjectId(req.user.id) };
 
     // Add filters if provided
     if (status) {
@@ -47,7 +47,8 @@ router.get('/vendor', auth, async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Order fetch error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
@@ -104,7 +105,7 @@ router.get('/stats/overview', auth, async (req, res) => {
     const stats = await Order.aggregate([
       {
         $match: {
-          vendor: mongoose.Types.ObjectId(req.user.id),
+          vendor: new mongoose.Types.ObjectId(req.user.id),
           createdAt: { $gte: startOfMonth }
         }
       },
@@ -134,7 +135,7 @@ router.get('/stats/overview', auth, async (req, res) => {
     res.json(stats[0] || defaultStats);
   } catch (err) {
     console.error('Stats error:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 

@@ -13,19 +13,65 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth APIs
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
+);
+
+// Auth APIs - Remove /api prefix for auth routes
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
+  vendorRegister: (userData) => api.post('/auth/vendor/register', userData),
 };
 
 // Product APIs
 export const productAPI = {
-  getAllProducts: () => api.get('/products'),
-  getVendorProducts: () => api.get('/products/vendor'),
-  createProduct: (productData) => api.post('/products', productData),
-  updateProduct: (id, productData) => api.put(`/products/${id}`, productData),
-  deleteProduct: (id) => api.delete(`/products/${id}`),
+  createProduct: async (productData) => {
+    try {
+      console.log('Creating product with data:', productData);
+      const response = await api.post('/api/products', productData);
+      console.log('Product creation response:', response);
+      return response;
+    } catch (error) {
+      console.error('Product creation error:', error);
+      throw error;
+    }
+  },
+
+  updateProduct: async (id, productData) => {
+    try {
+      const response = await api.put(`/api/products/${id}`, productData);
+      return response;
+    } catch (error) {
+      console.error('Product update error:', error);
+      throw error;
+    }
+  },
+
+  deleteProduct: async (id) => {
+    try {
+      const response = await api.delete(`/api/products/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Product deletion error:', error);
+      throw error;
+    }
+  },
+
+  getProducts: async () => {
+    try {
+      const response = await api.get('/api/products/vendor');
+      return response;
+    } catch (error) {
+      console.error('Get products error:', error);
+      throw error;
+    }
+  }
 };
 
 // Order APIs

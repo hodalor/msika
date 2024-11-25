@@ -1,6 +1,17 @@
 const mongoose = require('mongoose');
+const { generateUniqueId, PREFIXES } = require('../utils/idGenerator');
 
 const userSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  vendorId: {
+    type: String,
+    unique: true,
+    sparse: true, // Allows null/undefined values
+  },
   name: {
     type: String,
     required: true
@@ -19,11 +30,17 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'vendor', 'user'],
     default: 'user'
   },
+  avatar: {
+    type: String,
+    default: ''
+  },
   storeName: String,
   phoneNumber: String,
   address: String,
   description: String,
   logo: String,
+  storeImages: [String],
+  bannerImage: String,
   storeStatus: {
     type: String,
     enum: ['active', 'inactive', 'suspended'],
@@ -45,6 +62,17 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+});
+
+// Generate userId/vendorId before saving
+userSchema.pre('save', async function(next) {
+  if (!this.userId) {
+    this.userId = await generateUniqueId(this.constructor, PREFIXES.USER);
+  }
+  if (this.role === 'vendor' && !this.vendorId) {
+    this.vendorId = await generateUniqueId(this.constructor, PREFIXES.VENDOR, 'vendorId');
+  }
+  next();
 });
 
 module.exports = mongoose.model('User', userSchema); 

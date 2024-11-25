@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
-  Typography,
+  Grid,
   TextField,
   Button,
-  Grid,
+  Typography,
   Avatar,
+  CircularProgress,
   Divider,
-  Alert,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
@@ -32,31 +32,40 @@ const AccountSettings = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/users/profile`, {
+        console.log('Fetching user data...');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(prevData => ({
-            ...prevData,
-            name: data.name || '',
-            email: data.email || '',
-            phoneNumber: data.phoneNumber || '',
-            address: data.address || '',
-            avatar: data.avatar || ''
-          }));
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
         }
+
+        const data = await response.json();
+        console.log('User data received:', data);
+
+        setUserData(prevData => ({
+          ...prevData,
+          name: data.name || '',
+          email: data.email || '',
+          phoneNumber: data.phoneNumber || '',
+          address: data.address || '',
+          avatar: data.avatar || ''
+        }));
       } catch (error) {
-        showNotification('Error fetching user data', 'error');
+        console.error('Error fetching user data:', error);
+        showNotification(error.message || 'Error fetching user data', 'error');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserData();
-  }, []);
+    if (user) {
+      fetchUserData();
+    }
+  }, [user, showNotification]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,7 +78,13 @@ const AccountSettings = () => {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/profile`, {
+      console.log('Updating profile with data:', {
+        name: userData.name,
+        phoneNumber: userData.phoneNumber,
+        address: userData.address
+      });
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -82,13 +97,17 @@ const AccountSettings = () => {
         })
       });
 
-      if (response.ok) {
-        showNotification('Profile updated successfully', 'success');
-      } else {
-        showNotification('Failed to update profile', 'error');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update profile');
       }
+
+      console.log('Profile update response:', data);
+      showNotification('Profile updated successfully', 'success');
     } catch (error) {
-      showNotification('Error updating profile', 'error');
+      console.error('Error updating profile:', error);
+      showNotification(error.message || 'Error updating profile', 'error');
     }
   };
 
@@ -100,7 +119,7 @@ const AccountSettings = () => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/change-password`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/change-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -112,24 +131,31 @@ const AccountSettings = () => {
         })
       });
 
-      if (response.ok) {
-        showNotification('Password updated successfully', 'success');
-        setUserData(prev => ({
-          ...prev,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }));
-      } else {
-        showNotification('Failed to update password', 'error');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update password');
       }
+
+      showNotification('Password updated successfully', 'success');
+      setUserData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }));
     } catch (error) {
-      showNotification('Error updating password', 'error');
+      console.error('Error updating password:', error);
+      showNotification(error.message || 'Error updating password', 'error');
     }
   };
 
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>Loading...</Box>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
@@ -144,57 +170,58 @@ const AccountSettings = () => {
         </Typography>
         <form onSubmit={handleProfileUpdate}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sx={{ textAlign: 'center' }}>
+            <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
               <Avatar
-                src={userData.avatar}
+                src={userData.avatar || '/placeholder-avatar.jpg'}
                 sx={{ width: 100, height: 100, mx: 'auto', mb: 2 }}
               />
               <ImageUpload
                 images={userData.avatar ? [userData.avatar] : []}
-                onChange={(images) => setUserData(prev => ({ ...prev, avatar: images[0] }))}
+                onChange={(urls) => setUserData(prev => ({ ...prev, avatar: urls[0] }))}
                 maxImages={1}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={8}>
               <TextField
                 fullWidth
-                label="Name"
+                margin="normal"
                 name="name"
+                label="Full Name"
                 value={userData.name}
                 onChange={handleChange}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email"
+                margin="normal"
                 name="email"
+                label="Email"
                 value={userData.email}
                 disabled
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Phone Number"
+                margin="normal"
                 name="phoneNumber"
+                label="Phone Number"
                 value={userData.phoneNumber}
                 onChange={handleChange}
               />
-            </Grid>
-            <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Address"
+                margin="normal"
                 name="address"
+                label="Address"
                 value={userData.address}
                 onChange={handleChange}
                 multiline
                 rows={3}
               />
-            </Grid>
-            <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary">
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{ mt: 2 }}
+              >
                 Update Profile
               </Button>
             </Grid>
@@ -207,43 +234,41 @@ const AccountSettings = () => {
           Change Password
         </Typography>
         <form onSubmit={handlePasswordChange}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                type="password"
-                label="Current Password"
-                name="currentPassword"
-                value={userData.currentPassword}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                type="password"
-                label="New Password"
-                name="newPassword"
-                value={userData.newPassword}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                type="password"
-                label="Confirm New Password"
-                name="confirmPassword"
-                value={userData.confirmPassword}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary">
-                Change Password
-              </Button>
-            </Grid>
-          </Grid>
+          <TextField
+            fullWidth
+            margin="normal"
+            name="currentPassword"
+            label="Current Password"
+            type="password"
+            value={userData.currentPassword}
+            onChange={handleChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="newPassword"
+            label="New Password"
+            type="password"
+            value={userData.newPassword}
+            onChange={handleChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="confirmPassword"
+            label="Confirm New Password"
+            type="password"
+            value={userData.confirmPassword}
+            onChange={handleChange}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ mt: 2 }}
+          >
+            Change Password
+          </Button>
         </form>
       </Paper>
     </Box>

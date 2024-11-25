@@ -31,6 +31,7 @@ const ProductListing = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setLoading(true);
         const queryParams = new URLSearchParams({
           ...(searchTerm && { search: searchTerm }),
           ...(category && { category }),
@@ -38,12 +39,14 @@ const ProductListing = () => {
         });
 
         const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/products?${queryParams}`
+          `${process.env.REACT_APP_API_URL}/api/products?${queryParams}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setProducts(data);
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
         }
+        const data = await response.json();
+        console.log('Fetched products:', data);
+        setProducts(data);
       } catch (error) {
         console.error('Error fetching products:', error);
       } finally {
@@ -62,6 +65,16 @@ const ProductListing = () => {
     e.stopPropagation();
     addToCart(product, 1);
   };
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const filteredProducts = products.filter(product =>
+    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.productId?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -82,9 +95,11 @@ const ProductListing = () => {
           <Grid item xs={12} sm={4}>
             <TextField
               fullWidth
-              label="Search Products"
+              label="Search by name or ID"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearch}
+              placeholder="Enter product name or ID..."
+              helperText="You can search by product name or ID (e.g., P12345678)"
             />
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -123,7 +138,7 @@ const ProductListing = () => {
         </Grid>
 
         <Grid container spacing={3}>
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <Grid item xs={12} sm={6} md={4} key={product._id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardActionArea onClick={() => handleProductClick(product._id)}>
@@ -138,9 +153,14 @@ const ProductListing = () => {
                     sx={{ objectFit: 'cover' }}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" component="h2" gutterBottom>
-                      {product.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="h6" component="h2">
+                        {product.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ID: {product.productId}
+                      </Typography>
+                    </Box>
                     <Typography variant="body2" color="text.secondary" paragraph>
                       {product.description}
                     </Typography>

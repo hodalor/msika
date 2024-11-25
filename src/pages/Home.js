@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Box,
   Container,
@@ -24,9 +24,13 @@ import {
 import { useProducts } from '../hooks/useProducts';
 
 const Home = () => {
-  const { products: featuredProducts, loading: featuredLoading } = useProducts('/products/featured');
-  const { products: flashSales, loading: flashLoading } = useProducts('/products/flash-sales');
-  const { products: topDeals, loading: dealsLoading } = useProducts('/products/top-deals');
+  const { products: featuredProducts = [], loading: featuredLoading } = useProducts('/api/products/featured');
+  const { products: flashSales = [], loading: flashLoading } = useProducts('/api/products/flash-sales');
+  const { products: topDeals = [], loading: dealsLoading } = useProducts('/api/products/top-deals');
+
+  console.log('Featured Products:', featuredProducts);
+  console.log('Flash Sales:', flashSales);
+  console.log('Top Deals:', topDeals);
 
   if (featuredLoading || flashLoading || dealsLoading) {
     return (
@@ -42,7 +46,7 @@ const Home = () => {
         {/* Hero Banner */}
         <Paper sx={{ position: 'relative', mb: 4, borderRadius: 2, overflow: 'hidden' }}>
           <img
-            src="https://via.placeholder.com/1200x400"
+            src="/banner-placeholder.jpg"
             alt="Hero Banner"
             style={{ width: '100%', height: 'auto' }}
           />
@@ -62,40 +66,46 @@ const Home = () => {
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
           Featured Products
         </Typography>
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          {featuredProducts.map((product) => (
-            <Grid item xs={12} sm={6} md={4} key={product._id}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={product.images?.[0] || '/placeholder-image.jpg'}
-                  alt={product.name}
-                  onError={(e) => {
-                    e.target.src = '/placeholder-image.jpg';
-                  }}
-                  sx={{ objectFit: 'cover' }}
-                />
-                <CardContent>
-                  <Typography variant="h6" noWrap>
-                    {product.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.description}
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    ${product.price}
-                  </Typography>
-                  {product.discount > 0 && (
-                    <Typography variant="caption" bgcolor="error.main" color="white" px={1}>
-                      -{product.discount}%
+        {Array.isArray(featuredProducts) && featuredProducts.length > 0 ? (
+          <Grid container spacing={2} sx={{ mb: 4 }}>
+            {featuredProducts.map((product) => (
+              <Grid item xs={12} sm={6} md={4} key={product._id}>
+                <Card>
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={product.images?.[0] || '/placeholder-image.jpg'}
+                    alt={product.name}
+                    onError={(e) => {
+                      e.target.src = '/placeholder-image.jpg';
+                    }}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                  <CardContent>
+                    <Typography variant="h6" noWrap>
+                      {product.name}
                     </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                    <Typography variant="body2" color="text.secondary">
+                      {product.description}
+                    </Typography>
+                    <Typography variant="h6" color="primary">
+                      ${product.price}
+                    </Typography>
+                    {product.discount > 0 && (
+                      <Typography variant="caption" bgcolor="error.main" color="white" px={1}>
+                        -{product.discount}%
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography variant="body1" sx={{ textAlign: 'center', py: 3 }}>
+            No featured products available
+          </Typography>
+        )}
 
         {/* Flash Sales */}
         <Paper sx={{ p: 2, mb: 4 }}>
@@ -107,73 +117,48 @@ const Home = () => {
               Ending in: 02:45:30
             </Typography>
           </Box>
-          <Grid container spacing={2}>
-            {flashSales.map((item) => (
-              <Grid item xs={12} sm={6} md={3} key={item.id}>
-                <Card>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={item.image}
-                    alt={item.name}
-                  />
-                  <CardContent>
-                    <Typography variant="body2" noWrap>
-                      {item.name}
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      ${item.price}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
-                      ${item.originalPrice}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="caption" bgcolor="error.main" color="white" px={1}>
-                        -{item.discount}%
+          {Array.isArray(flashSales) && flashSales.length > 0 ? (
+            <Grid container spacing={2}>
+              {flashSales.map((item) => (
+                <Grid item xs={12} sm={6} md={3} key={item._id}>
+                  <Card>
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={item.images?.[0] || '/placeholder-image.jpg'}
+                      alt={item.name}
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
+                    <CardContent>
+                      <Typography variant="body2" noWrap>
+                        {item.name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Time left: {item.timeLeft}
+                      <Typography variant="h6" color="primary">
+                        ${item.price}
                       </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
-
-        {/* Top Deals */}
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-          Top Deals
-        </Typography>
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          {topDeals.map((product) => (
-            <Grid item xs={12} sm={6} md={3} key={product.id}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={product.image}
-                  alt={product.name}
-                />
-                <CardContent>
-                  <Typography variant="body2" noWrap>
-                    {product.name}
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    ${product.price}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
-                    ${product.originalPrice}
-                  </Typography>
-                  <Typography variant="caption" bgcolor="error.main" color="white" px={1}>
-                    -{product.discount}%
-                  </Typography>
-                </CardContent>
-              </Card>
+                      {item.originalPrice && (
+                        <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
+                          ${item.originalPrice}
+                        </Typography>
+                      )}
+                      {item.discount > 0 && (
+                        <Typography variant="caption" bgcolor="error.main" color="white" px={1}>
+                          -{item.discount}%
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
+          ) : (
+            <Typography variant="body1" sx={{ textAlign: 'center', py: 3 }}>
+              No flash sales available
+            </Typography>
+          )}
+        </Paper>
 
         {/* Features */}
         <Grid container spacing={3} sx={{ mb: 4 }}>

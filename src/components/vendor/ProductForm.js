@@ -31,8 +31,8 @@ const validationSchema = Yup.object({
 
 const ProductForm = ({ product, onClose, onSubmitSuccess }) => {
   const { showNotification } = useNotification();
-  const createProduct = useApi(productAPI.createProduct);
-  const updateProduct = useApi(productAPI.updateProduct);
+  const { execute: createProduct, loading: createLoading } = useApi(productAPI.createProduct);
+  const { execute: updateProduct, loading: updateLoading } = useApi(productAPI.updateProduct);
 
   const formik = useFormik({
     initialValues: {
@@ -48,19 +48,39 @@ const ProductForm = ({ product, onClose, onSubmitSuccess }) => {
     validationSchema,
     onSubmit: async (values) => {
       try {
+        console.log('Submitting product with values:', values);
+        
+        // Convert price and stock to numbers
+        const productData = {
+          ...values,
+          price: Number(values.price),
+          stock: Number(values.stock)
+        };
+
         if (product) {
-          await updateProduct.execute(product._id, values);
+          const result = await updateProduct(product._id, productData);
+          console.log('Product updated:', result);
           showNotification('Product updated successfully', 'success');
         } else {
-          await createProduct.execute(values);
+          const result = await createProduct(productData);
+          console.log('Product created:', result);
           showNotification('Product created successfully', 'success');
         }
-        onSubmitSuccess();
+        
+        if (onSubmitSuccess) {
+          onSubmitSuccess();
+        }
       } catch (error) {
-        showNotification(error.message || 'Failed to save product', 'error');
+        console.error('Product save error:', error);
+        showNotification(
+          error.message || 'Failed to save product. Please check all required fields.',
+          'error'
+        );
       }
     },
   });
+
+  const isLoading = createLoading || updateLoading;
 
   return (
     <form onSubmit={formik.handleSubmit}>
@@ -178,9 +198,9 @@ const ProductForm = ({ product, onClose, onSubmitSuccess }) => {
               type="submit"
               variant="contained"
               color="primary"
-              disabled={formik.isSubmitting}
+              disabled={isLoading || formik.isSubmitting}
             >
-              {formik.isSubmitting ? 'Saving...' : product ? 'Update' : 'Create'}
+              {isLoading ? 'Saving...' : product ? 'Update' : 'Create'}
             </Button>
           </Box>
         </Grid>

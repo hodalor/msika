@@ -6,24 +6,27 @@ const categorySchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  description: String,
   slug: {
     type: String,
     required: true,
     unique: true
   },
-  description: String,
-  image: String,
   parent: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category'
   },
-  level: {
+  icon: String,         // Category icon image
+  image: String,        // Category main image
+  bannerImage: String,  // Category banner image
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
+  order: {
     type: Number,
     default: 0
-  },
-  isActive: {
-    type: Boolean,
-    default: true
   },
   createdAt: {
     type: Date,
